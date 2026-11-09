@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Update Node.js TypeScript files: add new fields to FileRecord in lib.ts, add new API routes to server.ts, and update worker.ts to call /process/v2. Depends on FEAT-001 for the endpoint signatures, but the TypeScript changes can be authored and compiled independently since they call the processor over HTTP.",
+  "status": "pending",
+  "steps": [
+    "1. Update src/lib.ts: add three optional fields to the FileRecord type after the existing 'updatedAt' field: extractedPath?: string; confirmedCorners?: string; stage?: string. These are optional so existing Redis hashes (without these keys) continue to deserialize correctly via redis.hgetall. The State type and all other exports remain unchanged. Also add a new optional field 'workDir?: string' to FileRecord to track the per-file working directory used by the v2 pipeline.",
+
+    "2. Update src/worker.ts: the existing Worker logic calls /process and handles its response — keep that code path intact as a fallback. Add logic to detect whether a file should use the v2 pipeline: check if the batch settings include a field 'useV2?: boolean'. If useV2 is true (or if the job data has a 'v2' flag), call POST {processor}/process/v2 instead of POST {processor}/process. The /process/v2 body is: { input_path: x.inputPath, output_path: x.outputPath, settings: s, extracted_path: x.extractedPath ?? null, confirmed_corners: x.confirmedCorners ? JSON.parse(x.confirmedCorners) : null }. Map the ProcessV2Response to FileRecord state as follows: if result.ok → state='completed'; if !result.ok && result.manual_review → state='needs_review'; if !result.ok && !result.manual_review → state='failed'. Store result.stages as x.stage = JSON.stringify(result.stages). Store result.output_path in x.outputPath if present. Keep the existing /process call path for batches without useV2. The worker file must remain a single Worker constructor call — do not restructure into a class.",
+
+    "3. Update src/server.ts: add four new route handlers after the existing routes (before the app.listen call). All four routes are for per-file operations on the new v2 pipeline. Route details:\n\n   POST /api/files/:id/extract — Triggers extract-only for a single uploaded file. Reads the FileRecord, verifies state is 'uploaded'. Calls POST {processor}/process/extract-only with { input_path: x.inputPath, work_dir: workDirFor(x.id) }. On success: saves x.extractedPath = response.extracted_path, x.stage = 'extracted', x.state = response.confidence < 0.5 ? 'needs_review' : 'processing'. Returns { file: x, extraction: response }.\n\n   POST /api/files/:id/confirm-crop — Accepts { corners: number[][] } in body. Reads FileRecord. Calls POST {processor}/process/confirm-crop with { input_path: x.inputPath, corners_px: body.corners, work_dir: workDirFor(x.id) }. Saves x.confirmedCorners = JSON.stringify(body.corners), x.extractedPath = response.extracted_path. Returns { file: x, extraction: response }.\n\n   POST /api/files/:id/correct — Triggers the correction pipeline (face align + bg remove + crop) on an already-extracted file. Reads FileRecord, verifies extractedPath is set. Calls POST {processor}/process/correct with { extracted_path: x.extractedPath, output_path: x.outputPath, settings: mergedSettings }. Maps CorrectResponse: ok → state='completed'; manual_review → state='needs_review'; else → state='failed'. Saves x.stage = JSON.stringify(response.stages). Returns { file: x, result: response }.\n\n   GET /api/files/:id/preview — Serves the extracted (pre-correction) image for display in the UI. Reads FileRecord, checks extractedPath exists on disk. Returns the file as an image stream (same pattern as /api/files/:id/original). Returns 404 if no extractedPath.\n\n   Helper function workDirFor(fileId: string): string — returns path.join(dataDir, 'work', fileId) and ensures the directory exists (fs.mkdirSync with recursive:true). Add this helper near the top of server.ts, after the init() call.\n\n   Import additions needed: no new npm packages required. The processor URL constant already comes from worker.ts pattern — in server.ts, read it as: const processorUrl = process.env.PROCESSOR_URL || 'http://processor:8000'."
+  ],
+  "acceptance_criteria": [
+    "src/lib.ts FileRecord type has extractedPath?, confirmedCorners?, stage?, workDir? optional fields",
+    "src/worker.ts calls /process/v2 when batch settings.useV2 is true, /process otherwise",
+    "src/server.ts has all four new routes: POST /api/files/:id/extract, POST /api/files/:id/confirm-crop, POST /api/files/:id/correct, GET /api/files/:id/preview",
+    "npm run build exits 0 with no TypeScript errors"
+  ],
+  "verification": [
+    "npm run build — must exit 0 with zero TypeScript errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

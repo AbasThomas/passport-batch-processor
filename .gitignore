@@ -6,6 +6,7 @@ dist/
 
 # Runtime data
 data/
+processor/models/
 
 # Local environment variables
 .env

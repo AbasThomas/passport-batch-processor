@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-004",
+  "type": "chore",
+  "description": "Update processor/Dockerfile for the new package structure (if not already handled in FEAT-001 step 2), update docker-compose.yml to add the WORK_DIR env var to the processor service, and update the .gitignore / project docs as needed. Also add __init__.py to the processor root to make it a proper Python package. This feature depends on FEAT-001 (the package tree must exist before the Dockerfile change is meaningful) but is independent of FEAT-002 and FEAT-003.",
+  "status": "pending",
+  "steps": [
+    "1. Create processor/__init__.py (empty file). This makes processor/ itself importable if needed and is consistent Python package hygiene. The uvicorn command runs as 'uvicorn app:app' from WORKDIR /app, so the sub-packages are siblings of app.py and are already importable without this — but adding it is harmless and correct.",
+
+    "2. Update docker-compose.yml: in the processor service's environment list, add 'WORK_DIR=/data/work' so intermediate pipeline files go to the persistent volume (same /data volume already mounted as uploads:/data). This ensures extracted and aligned intermediate images survive container restarts during multi-step workflows (extract → confirm → correct).",
+
+    "3. Verify processor/Dockerfile already has 'COPY . .' and 'libgl1' from FEAT-001 step 2. If for any reason those changes were not applied, apply them here: change 'COPY app.py .' to 'COPY . .' and add libgl1 to the apt-get install line.",
+
+    "4. Review docker-compose.yml worker service: add 'PROCESSOR_URL=http://processor:8000' if not already present (it is already present as an env var in the existing file — confirm and leave unchanged). No other docker-compose changes needed.",
+
+    "5. If a .gitignore exists, ensure it ignores: data/, dist/, __pycache__/, *.pyc, .env. Check .gitignore and add any missing entries."
+  ],
+  "acceptance_criteria": [
+    "processor/__init__.py exists",
+    "docker-compose.yml processor service environment contains WORK_DIR=/data/work",
+    "processor/Dockerfile uses 'COPY . .' and installs libgl1",
+    "docker-compose build completes without errors for all services"
+  ],
+  "verification": [
+    "docker-compose build — all four services (redis, api, worker, processor) build without errors",
+    "docker-compose up -d && docker-compose exec processor python -c \"import app; print('app imports OK')\" — must succeed"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

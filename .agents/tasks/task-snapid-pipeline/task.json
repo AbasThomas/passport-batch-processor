@@ -1,0 +1,7 @@
+{
+  "task_id": "task-snapid-pipeline",
+  "task_description": "Implement the SnapID printed-photo extraction and passport-photo correction pipeline: Python sub-packages (photo_extraction, face_processing, background_removal, enhancement, pipeline), Pydantic models, new FastAPI v2 endpoints, Node.js worker/server/lib updates, and a rebuilt 5-step frontend UI.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

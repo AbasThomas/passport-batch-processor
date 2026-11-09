@@ -1,0 +1,29 @@
+{
+  "project_type": "Fullstack: Python FastAPI AI service (processor/) + Node.js/Fastify API + BullMQ worker + vanilla JS frontend",
+  "language": "Python 3.11 (processor), TypeScript/ESM (Node.js), vanilla JS (frontend)",
+  "build_system": "Node: tsc (tsconfig target=ES2022, module=NodeNext, outDir=dist, rootDir=src). Python: no build step, uvicorn runs app.py directly. Docker Compose orchestrates all services.",
+  "test_framework": "None discovered in repo. Verification is TypeScript compile + Python import checks.",
+  "build_command": "npm run build (runs tsc from workspace root)",
+  "test_command": "npm run build  — TypeScript compile with zero errors is the acceptance gate for Node changes. Python: docker-compose exec processor python -c 'from photo_extraction.boundary_detector import BoundaryDetector; from face_processing.face_detector import FaceDetector; from background_removal.segmenter import Segmenter; from enhancement.enhancer import Enhancer; from pipeline.pipeline import PassportPipeline; print(\"ALL OK\")'",
+  "verification_instructions": "1. npm run build — must exit 0 with no TypeScript errors. 2. Python import smoke-test (see test_command). Both must pass before any commit.",
+  "snapshot_or_generated_files": "dist/ is produced by npm run build. Never commit dist/. The processor has no build step.",
+  "environment_constraints": "All model inference is local ONNX only (rembg with BiRefNet/U2Net). Do NOT call external image APIs. Processor Dockerfile copies only requirements.txt + app.py — after this task it will need to copy the full processor/ package. mediapipe 0.10.14 requires libGL on Linux; the Dockerfile installs libglib2.0-0 already but may need libgl1. The Node Dockerfile copies everything in the repo into /app at build time (COPY . .) so new src/ files are included automatically.",
+  "contribution_requirements": "Existing /health and /process endpoints must remain unchanged and fully functional. Old dashboard (public/index.html legacy view) must remain accessible via a back link from the new UI. FileRecord fields added to lib.ts must be optional so existing Redis hashes with no new fields still deserialize correctly. Worker must still handle the old /process path for backwards compatibility — only /process/v2 is used for new pipeline jobs.",
+  "key_patterns": "Python: all code currently in a single flat app.py; new code goes in processor/ sub-packages with __init__.py files. FastAPI model uses BaseModel. rembg new_session() + remove() pattern for segmentation. OpenCV for image manipulation. Node: lib.ts defines FileRecord type and Redis helpers; server.ts uses Fastify route handlers inline; worker.ts uses BullMQ Worker. All Node imports use .js extensions (NodeNext resolution). Frontend: vanilla JS with global window.* helpers, no framework, fetch-based API calls.",
+  "relevant_files": [
+    "processor/app.py",
+    "processor/requirements.txt",
+    "processor/Dockerfile",
+    "src/lib.ts",
+    "src/server.ts",
+    "src/worker.ts",
+    "src/queue.ts",
+    "public/index.html",
+    "public/app.js",
+    "public/style.css",
+    "docker-compose.yml",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "directory_structure": "passport-batch-processor/ — workspace root. processor/ — Python FastAPI service (Dockerfile, app.py, requirements.txt). src/ — Node.js TypeScript source (server.ts, worker.ts, lib.ts, queue.ts, types.d.ts). public/ — static frontend (index.html, app.js, style.css). data/ — runtime data volume (not in repo). dist/ — compiled JS output (not in repo). docker-compose.yml wires redis + api + worker + processor containers."
+}
