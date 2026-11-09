@@ -13,7 +13,11 @@ services:
   worker:
     build: .
     command: npm run start:worker
-    environment: [REDIS_URL=redis://redis:6379, DATA_DIR=/data, WORKER_CONCURRENCY=4, GPU_CONCURRENCY=1]
+    environment: [REDIS_URL=redis://redis:6379, DATA_DIR=/data, PROCESSOR_URL=http://processor:8000, WORKER_CONCURRENCY=2, GPU_CONCURRENCY=1]
     volumes: [uploads:/data]
-    depends_on: [redis]
-volumes: { redis: {}, uploads: {} }
+    depends_on: [redis, processor]
+  processor:
+    build: ./processor
+    environment: [U2NET_HOME=/models, SEGMENTATION_MODEL=birefnet-general]
+    volumes: [uploads:/data, model_cache:/models]
+volumes: { redis: {}, uploads: {}, model_cache: {} }
