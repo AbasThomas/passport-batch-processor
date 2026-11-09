@@ -78,7 +78,7 @@ def _strategy_contours(gray, edges):
     img_area = gray.shape[0] * gray.shape[1]
     for c in cnts:
         area = cv2.contourArea(c)
-        if area < 0.02 * img_area or area > 0.9 * img_area:
+        if area < 0.01 * img_area or area > 0.9 * img_area:
             continue
         peri = cv2.arcLength(c, True)
         for eps in (0.02, 0.04):
@@ -88,7 +88,7 @@ def _strategy_contours(gray, edges):
                 if scored:
                     cands.append(scored)
         # fallback: rotated rect of large contours (handles rounded/soft corners)
-        if area > 0.05 * img_area:
+        if area > 0.03 * img_area:
             rect = cv2.minAreaRect(c)
             box = cv2.boxPoints(rect)
             scored = _score_candidate(gray, box, img_area, 'minarearect')
