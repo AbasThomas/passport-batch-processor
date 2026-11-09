@@ -1,0 +1,19 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes: [redis:/data]
+  api:
+    build: .
+    command: npm start
+    ports: ["3000:3000"]
+    environment: [REDIS_URL=redis://redis:6379, DATA_DIR=/data]
+    volumes: [uploads:/data]
+    depends_on: [redis]
+  worker:
+    build: .
+    command: npm run start:worker
+    environment: [REDIS_URL=redis://redis:6379, DATA_DIR=/data, WORKER_CONCURRENCY=4, GPU_CONCURRENCY=1]
+    volumes: [uploads:/data]
+    depends_on: [redis]
+volumes: { redis: {}, uploads: {} }
