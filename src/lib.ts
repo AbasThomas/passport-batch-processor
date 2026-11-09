@@ -8,8 +8,8 @@ export const dataDir = resolve(process.env.DATA_DIR || './data');
 export const redis = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', { maxRetriesPerRequest: null });
 export const maxFiles = Number(process.env.MAX_BATCH_FILES || 2000);
 export const maxBytes = Number(process.env.MAX_FILE_BYTES || 20 * 1024 * 1024);
-export type State = 'uploaded'|'queued'|'processing'|'completed'|'failed'|'cancelled';
-export type Settings = { background: string; preset: 'none'|'natural'|'enhanced'; width: number; height: number; crop: boolean; format: 'jpg'|'png'; quality: number };
+export type State = 'uploaded'|'queued'|'processing'|'completed'|'needs_review'|'failed'|'cancelled';
+export type Settings = { background: string; preset: 'none'|'natural'|'enhanced'; width: number; height: number; crop: boolean; format: 'jpg'|'png'; quality: number; dpi?:number; autoDetect?:boolean; enhance?:boolean; sharpness?:number; countryProfile?:string };
 export type FileRecord = { id:string; batchId:string; sourceName:string; outputName:string; inputPath:string; outputPath:string; state:State; error?:string; attempts:string; customSettings?:string; createdAt:string; updatedAt:string };
 export const batchPath = (id:string) => join(dataDir, 'batches', id);
 export async function init(){ await fs.mkdir(join(dataDir, 'batches'), {recursive:true}); }
