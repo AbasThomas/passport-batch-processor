@@ -46,7 +46,7 @@ def _startup():
 @app.get('/health')
 def health():
     return {'ok': True, 'models': {'face': 'yunet-2023mar',
-                                   'segment': os.getenv('SEGMENTATION_MODEL', 'auto')}}
+                                   'segment': os.getenv('SEGMENTATION_MODEL', 'isnet-general-use')}}
 
 
 @app.post('/process')

@@ -15,11 +15,11 @@ export const batchPath = (id:string) => join(dataDir, 'batches', id);
 export async function init(){ await fs.mkdir(join(dataDir, 'batches'), {recursive:true}); }
 export const safeName=(name:string)=>basename(name).replace(/[\\/\0]/g,'_');
 export function outputName(source:string, format:string, index:number) { const ext=extname(source); const stem=source.slice(0, source.length-ext.length) || source; return `${stem}${index ? ` (${index + 1})` : ''}.${format}`; }
-export async function saveRecord(r:FileRecord){ r.updatedAt=new Date().toISOString(); await redis.hset(`file:${r.id}`, r as unknown as Record<string,string>); await redis.sadd(`batch:${r.batchId}:files`,r.id); }
+export async function saveRecord(r:FileRecord){ r.updatedAt=new Date().toISOString(); await redis.hmset(`file:${r.id}`, r as unknown as Record<string,string>); await redis.sadd(`batch:${r.batchId}:files`,r.id); }
 export async function file(id:string){ const f=await redis.hgetall(`file:${id}`); return Object.keys(f).length ? f as FileRecord : null; }
 export async function files(batchId:string){ const ids=await redis.smembers(`batch:${batchId}:files`); return (await Promise.all(ids.map(file))).filter(Boolean) as FileRecord[]; }
 export async function batch(id:string){ const b=await redis.hgetall(`batch:${id}`); return Object.keys(b).length ? b : null; }
-export async function saveBatch(id:string, values:Record<string,string>){ await redis.hset(`batch:${id}`, values); }
+export async function saveBatch(id:string, values:Record<string,string>){ await redis.hmset(`batch:${id}`, values); }
 export function digest(s:string){ return createHash('sha256').update(s).digest('hex'); }
 export async function writeUpload(stream:NodeJS.ReadableStream,path:string){ await pipeline(stream,createWriteStream(path,{flags:'wx'})); }
 export { randomUUID, fs, join, createReadStream, createWriteStream };

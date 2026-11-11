@@ -18,6 +18,6 @@ services:
     depends_on: [redis, processor]
   processor:
     build: ./processor
-    environment: [U2NET_HOME=/models, SEGMENTATION_MODEL=birefnet-general]
+    environment: [U2NET_HOME=/models, SEGMENTATION_MODEL=isnet-general-use]
     volumes: [uploads:/data, model_cache:/models]
 volumes: { redis: {}, uploads: {}, model_cache: {} }

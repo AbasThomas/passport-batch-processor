@@ -60,7 +60,7 @@ def warmup():
             from face_processing.yunet_model import ensure_model
             from background_removal.segmentation_service import get_session
             ensure_model()
-            get_session('birefnet-general')
+            get_session('u2net')  # smaller model for faster startup
         except Exception:
             pass
     threading.Thread(target=_w, daemon=True).start()

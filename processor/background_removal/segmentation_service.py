@@ -7,8 +7,8 @@ from rembg import new_session, remove
 
 _sessions = {}
 
-# preferred order when 'auto' is requested
-AUTO_ORDER = ('birefnet-general', 'isnet-general-use', 'u2net')
+# preferred order when 'auto' is requested — smallest first for faster startup
+AUTO_ORDER = ('u2net', 'isnet-general-use', 'birefnet-general')
 
 
 def get_session(model_name):
